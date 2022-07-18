@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
+import '../API/authAPI.dart';
 import '../blocs/login_bloc.dart';
+import '../local_storage/login_token.dart';
+
 
 
 class LoginPage extends StatefulWidget{
@@ -12,34 +16,27 @@ class LoginPage extends StatefulWidget{
 }
 class _LoginPageState extends State<LoginPage>
 {
-
+    getToken () async {
+      var token  = await UserToken.getToken();
+      if(token!= null)
+        {
+          Navigator.pushNamed(context, "/home");
+      }
+    return false;
+  }
+  String _token ='';
+  var authentical = authAPI();
   LoginBloc bloc = LoginBloc();
   String _email = '';
   String _pass = '';
   bool _isShow = true;
-  String _passwordOption = "SHOW";
+  bool _isLoading = false;
   @override
-  void initState()
+
+  @override
+   Widget   build  (BuildContext context)
   {
-    print("Init");
-    super.initState();
-  }
-  @override
-  void dispose(){
-    print("Login dispose");
-    bloc.dispose();
-    super.dispose();
-  }
-  @override
-  void deactivate()
-  {
-    print("deactivate");
-    super.deactivate();
-    dispose();
-  }
-  @override
-  Widget build(BuildContext context)
-  {
+    getToken();
 
     return Scaffold(
         resizeToAvoidBottomInset: true,
@@ -68,11 +65,11 @@ class _LoginPageState extends State<LoginPage>
                         height: 80,
                       ),
                       Container(
-                        padding: EdgeInsets.fromLTRB(0, 0, 0, 50),
+                        padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Hello',style:const TextStyle(fontSize: 60),),
+                            Text("Hello",style:const TextStyle(fontSize: 60),),
                             Text('Welcome Back',style:const TextStyle(fontSize: 40,fontWeight: FontWeight.w700))
                           ],
                         ),
@@ -80,12 +77,23 @@ class _LoginPageState extends State<LoginPage>
                       Column(
                         children: [
                           Container(
+                            child: StreamBuilder(
+                              stream: bloc.userStream,
+                              builder: (context,snapshot)=>Text(
+                                snapshot.hasError? snapshot.error.toString(): "",
+                                style: TextStyle(color:Colors.red,fontStyle: FontStyle.italic, fontSize: 15),
+                              ),
+                            ),
+                          ),
+                          Container(
                               padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
                               child: StreamBuilder(
                                 stream: bloc.emailStream,
                                 builder: (context,snapshot) =>TextField(
                                 onChanged: (String value) {
+                                  bloc.isValidInfo(_email, _pass);
                                   _email = value;
+
                                 },
                                 style:const TextStyle(
                                   fontSize: 20,
@@ -106,7 +114,9 @@ class _LoginPageState extends State<LoginPage>
                                 stream: bloc.passStream,
                                 builder: (context,snapshot)=>TextField(
                                   onChanged: (String value) {
+                                    bloc.isValidInfo(_email, _pass);
                                     _pass = value;
+
                                   },
                                   style:const TextStyle(
                                     fontSize: 20,
@@ -119,10 +129,9 @@ class _LoginPageState extends State<LoginPage>
                                         onTap: (){
                                           setState(() {
                                             _isShow=!_isShow;
-                                            _passwordOption = _isShow?'SHOW':'HIDE';
                                           });
                                         },
-                                        child: Text( _passwordOption,style:const TextStyle(color: Colors.blueAccent,fontSize: 15,fontWeight: FontWeight.w600),)),
+                                        child: Text( _isShow?'SHOW':'HIDE',style:const TextStyle(color: Colors.blueAccent,fontSize: 15,fontWeight: FontWeight.w600),)),
                                     labelText: 'PASSWORD',
                                     labelStyle:const TextStyle(fontSize: 15,color: Colors.grey,fontWeight: FontWeight.w500),
                                     floatingLabelBehavior:  FloatingLabelBehavior.auto,
@@ -139,21 +148,40 @@ class _LoginPageState extends State<LoginPage>
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(100),
                         ),
-                        child: ElevatedButton(
+                        child:ElevatedButton(
                             style:ButtonStyle(
+                                backgroundColor: _isLoading?MaterialStateProperty.all(Colors.green):MaterialStateProperty.all(Colors.blue),
                                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30)
-                                ))
+                                    borderRadius: BorderRadius.circular(30),
+                                ),
+                                ),
                             ),
-                            onPressed: (){
+                            onPressed:_isLoading?(){}:() async {
                               bool data= bloc.isValidInfo(_email, _pass);
                               if(data)
                                 {
-                                  Navigator.pushNamed(context, '/home');
+                                  setState(() {
+                                    _isLoading =true;
+                                  });
+                                  var authRes =await authentical.register({
+                                    'email':_email,
+                                    'password':_pass,
+                                  });
+                                  setState(() {
+                                    _isLoading =false;
+                                  });
+                                  if(bloc.isValidUser(authRes))
+                                  {
+                                    UserToken.setToken(authRes["body"]["token"].toString());
+                                    Navigator.pushNamed(context, '/home');
+                                  }
                                 }
 
                             },
-                            child:const Text('SIGN IN',style: TextStyle(fontSize: 20,color: Colors.white),)),
+                            child:Text(
+                            _isLoading ?'SIGNING IN...':'SIGN IN',
+                              style: TextStyle(fontSize: 20,color: Colors.white,),)),
+
                       ) ,
                       Container(
                         padding:const EdgeInsets.fromLTRB(0, 90, 0, 0),
