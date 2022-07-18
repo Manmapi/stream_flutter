@@ -14,12 +14,29 @@ class _LoginPageState extends State<LoginPage>
 {
 
   LoginBloc bloc = LoginBloc();
-  bool _isValidEmail = true;
-  bool _isvalidPass = true;
   String _email = '';
   String _pass = '';
   bool _isShow = true;
   String _passwordOption = "SHOW";
+  @override
+  void initState()
+  {
+    print("Init");
+    super.initState();
+  }
+  @override
+  void dispose(){
+    print("Login dispose");
+    bloc.dispose();
+    super.dispose();
+  }
+  @override
+  void deactivate()
+  {
+    print("deactivate");
+    super.deactivate();
+    dispose();
+  }
   @override
   Widget build(BuildContext context)
   {
@@ -162,13 +179,6 @@ class _LoginPageState extends State<LoginPage>
             ),),
         )
     );
-  }
-  bool emailValidation(String email) {
-    return RegExp(
-        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$').hasMatch(email);
-  }
-  bool passValidation(String pass){
-    return pass.length >8;
   }
 
 }

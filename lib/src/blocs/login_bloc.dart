@@ -34,6 +34,7 @@ class LoginBloc{
     return flag;
   }
   void dispose(){
+    print('bloc disposed');
     _emailController.close();
     _passController.close();
 }
