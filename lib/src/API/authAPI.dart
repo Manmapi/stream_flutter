@@ -8,7 +8,7 @@ class authAPI{
       'email':data['email'],
       'password':data['password'],
     });
-    int statusCode = await response.statusCode;
+    int statusCode = response.statusCode;
     var body = await jsonDecode(response.body);
     return {
       "statusCode": statusCode,

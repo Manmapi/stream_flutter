@@ -11,7 +11,7 @@ class UserToken{
 
     final prefs = await SharedPreferences.getInstance();
 
-    String? token = await prefs.getString('token');
+    String? token =  prefs.getString('token');
 
     return token;
 
@@ -21,7 +21,7 @@ class UserToken{
 
     final prefs = await SharedPreferences.getInstance();
 
-    int? createdAt = await prefs.getInt('createAt');
+    int? createdAt =  prefs.getInt('createAt');
     return createdAt;
   }
   static setCreateAt() async {
